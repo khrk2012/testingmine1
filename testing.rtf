@@ -1,3 +1,5 @@
+// Get token range, roll #d12 for attacker and defender vs target number removing tied die values, compare to target and get successes, run special effects.
+//get range to target token
 let targettoken = Array.from(game.user.targets)[0];
 let maintoken = canvas.tokens.controlled[0];
 
@@ -22,6 +24,7 @@ let chatData = {
             content: `${tokenDistance(maintoken, targettoken)} inches between the two tokens.`
         };
 ChatMessage.create(chatData, {});
+// End get target token range
 
 let content =     "\n <div class='form-group dialog layer-settings'>" +
                   "\n <label>Dice for attacker:</label> <input type='number' name='attacker-dice' value=0 />"+
@@ -50,7 +53,7 @@ async function callback(html) {
     const attackerDice = html.find(".layer-settings.dialog [name='attacker-dice']")[0].value + "d12";
     const defenderDice = html.find(".layer-settings.dialog [name='defender-dice']")[0].value + "d12";
     const target = html.find(".layer-settings.dialog [name='target']")[0].value;
-    let attackerRoll = new Roll(@attributes.Fight1.value + attackerDice);
+    let attackerRoll = new Roll(attackerDice);
     let defenderRoll = new Roll(defenderDice);
     await attackerRoll.roll();
     await defenderRoll.roll();
@@ -66,6 +69,7 @@ async function castSpell(effect) {
         canvas.fxmaster.drawSpecialToward(effect, tokens[0], t);
     })
 }
+//special effects
 castSpell({
         file: "modules/JB2A_DnD5e/Library/Generic/Weapon_Attacks/Ranged/LazerShot_01_Blue_30ft_1600x400.webm",
     anchor: {
@@ -82,7 +86,7 @@ castSpell({
 async function playSound({file = ``, volume = 0.8 , wait = 0}={})
 {
   const wait_fn = async (ms) => new Promise((resolve)=> setTimeout(resolve, ms));
-  /* Play File */
+  /* Play Audio File */
   if(file)
   {
     let audio = AudioHelper.play({src: file, volume, autoplay: true, loop: false}, true);
@@ -90,8 +94,9 @@ async function playSound({file = ``, volume = 0.8 , wait = 0}={})
   }
 }
     playSound({ file : `modules/gAudioBundle-4/src/Sci Fi Fx/SciFi Sounds And SciFi Weapons/Sci_Fi_Weapon_Blaster_Laser_Boom_Zap_08.ogg` });
-   
- let attackPool = attackerRoll.terms[0].results.map(x => x.result);
+//End special effects
+
+    let attackPool = attackerRoll.terms[0].results.map(x => x.result);
     let defencePool = defenderRoll.terms[0].results.map(x=> x.result);
     for (var defDie of defencePool){
         if (attackPool.includes(defDie)){
@@ -109,3 +114,4 @@ async function playSound({file = ``, volume = 0.8 , wait = 0}={})
         content: "Attack Total:" + total + " / Target: " + target + " = Successes: " + result
     })
 }
+ui.notifications.info(`${actor.data.name} Is rolling an attack`)

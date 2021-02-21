@@ -26,12 +26,16 @@ ChatMessage.create(chatData, {});
 let content =     "\n <div class='form-group dialog layer-settings'>" +
                   "\n <label>Dice for attacker:</label> <input type='number' name='attacker-dice' value=0 />"+
                   "\n <label>Dice for defender:</label> <input type='number' name='defender-dice' value=0 />"+ 
-                  "\n <label>Target:</label> <input type='number' name='target' value=0 />"
+                  "\n <label>Target:</label> <input type='number' name='target' value= 0 />"
                   "\n </div>"
 let d = new Dialog({
     title: "Attack",
     content: content,
     buttons: {
+      no: {
+            icon: "<i class=\"fas fa-times\"></i>",
+            label: "Cancel"
+        },
      one: {
       icon: '<i class="fas fa-check"></i>',
       label: "Roll Attack",
@@ -46,31 +50,13 @@ async function callback(html) {
     const attackerDice = html.find(".layer-settings.dialog [name='attacker-dice']")[0].value + "d12";
     const defenderDice = html.find(".layer-settings.dialog [name='defender-dice']")[0].value + "d12";
     const target = html.find(".layer-settings.dialog [name='target']")[0].value;
-    let attackerRoll = new Roll(attackerDice);
+    let attackerRoll = new Roll(@attributes.Fight1.value + attackerDice);
     let defenderRoll = new Roll(defenderDice);
     await attackerRoll.roll();
     await defenderRoll.roll();
     await attackerRoll.toMessage();
     await defenderRoll.toMessage();
-    let attackPool = attackerRoll.terms[0].results.map(x => x.result);
-    let defencePool = defenderRoll.terms[0].results.map(x=> x.result);
-    for (var defDie of defencePool){
-        if (attackPool.includes(defDie)){
-            attackPool.splice(attackPool.indexOf(defDie),1)
-        }
-    }
-    let total = 0;
-    for (var attDie of attackPool){
-        total += attDie
-    }
-    let result = Math.floor(total/target);
-    result += attackPool.filter(a => a === 12).length;
-    result -= defencePool.filter(a => a === 12).length;
-    ChatMessage.create({
-        content: "Attack Total:" + total + " / Target: " + target + " = Successes: " + result
-    })
-}
-function castSpell(effect) {
+async function castSpell(effect) {
     const tokens = canvas.tokens.controlled;
     if (tokens.length == 0) {
         ui.notifications.error("Please select a token");
@@ -93,3 +79,33 @@ castSpell({
     y: 1.0
 }
 });
+async function playSound({file = ``, volume = 0.8 , wait = 0}={})
+{
+  const wait_fn = async (ms) => new Promise((resolve)=> setTimeout(resolve, ms));
+  /* Play File */
+  if(file)
+  {
+    let audio = AudioHelper.play({src: file, volume, autoplay: true, loop: false}, true);
+    await wait_fn((audio._duration*1000) + wait);
+  }
+}
+    playSound({ file : `modules/gAudioBundle-4/src/Sci Fi Fx/SciFi Sounds And SciFi Weapons/Sci_Fi_Weapon_Blaster_Laser_Boom_Zap_08.ogg` });
+   
+ let attackPool = attackerRoll.terms[0].results.map(x => x.result);
+    let defencePool = defenderRoll.terms[0].results.map(x=> x.result);
+    for (var defDie of defencePool){
+        if (attackPool.includes(defDie)){
+            attackPool.splice(attackPool.indexOf(defDie),1)
+        }
+    }
+    let total = 0;
+    for (var attDie of attackPool){
+        total += attDie
+    }
+    let result = Math.floor(total/target);
+    result += attackPool.filter(a => a === 12).length;
+    result -= defencePool.filter(a => a === 12).length;
+        ChatMessage.create({
+        content: "Attack Total:" + total + " / Target: " + target + " = Successes: " + result
+    })
+}
